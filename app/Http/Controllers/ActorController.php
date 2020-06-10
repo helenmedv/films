@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Actor;
+use App\Film;
 use Illuminate\Http\Request;
 
 class ActorController extends Controller
@@ -29,14 +30,34 @@ class ActorController extends Controller
         return view('actors.form');
     }
 
+    protected function formData(){
+        return request()->validate([
+            'name' => 'required|unique',
+        ]);
+    }
+
     public function store(Request $request)
     {
-        //
+        $data = $this->formData();
+        $data = Actor::on()->create($data);
+        return redirect()->route('actors.show', $data);
     }
 
     public function show(Actor $actor)
     {
-        //
+        $films = $actor->films;
+
+        $films = $films->map(function (Film $film){
+            return $film;
+        });
+
+        $films = $films->toArray();
+
+
+        return view('actors.show', [
+            'films' => $films,
+            'actor' => $actor
+        ]);
     }
 
     /**
@@ -47,7 +68,7 @@ class ActorController extends Controller
      */
     public function edit(Actor $actor)
     {
-        //
+        return view('actors.form', compact('actor'));
     }
 
     /**
@@ -59,7 +80,10 @@ class ActorController extends Controller
      */
     public function update(Request $request, Actor $actor)
     {
-        //
+        $data = $this->validated($request, $actor);
+
+        $actor->update($data);
+        return redirect()->route('actors.show', $actor);
     }
 
     /**
@@ -70,6 +94,16 @@ class ActorController extends Controller
      */
     public function destroy(Actor $actor)
     {
-        //
+        $actor->delete();
+        return redirect()->route('actors.index');
+    }
+
+    protected function validated(Request $request, Actor $actor = null){
+        $rules = [
+            'fio' => 'required'
+        ];
+
+
+        return $request->validate($rules);
     }
 }

@@ -20,9 +20,10 @@ class FilmController extends Controller
 
     public function index()
     {
-        return view('films.index', [
-            'films' => Film::all()
-        ]);
+
+         return view('films.index', [
+                'films' => Film::all()
+         ]);
     }
 
     /**
@@ -38,6 +39,7 @@ class FilmController extends Controller
             'actors' => Actor::all(),
             'filmGenres' => [],
             'filmActors' => [],
+            'description' => ''
         ]);
     }
 
@@ -45,8 +47,10 @@ class FilmController extends Controller
         return request()->validate([
             'title' => 'required',
             'image' => 'nullable|file',
+            'year' => 'required',
             'genres' => 'nullable|array',
-            'actors' => 'nullable|array'
+            'actors' => 'nullable|array',
+            'description' => 'nullable'
         ]);
     }
 
@@ -73,25 +77,23 @@ class FilmController extends Controller
         foreach ($data->get('genres') as $id){
             /** @var Genre $genre */
             $genre = Genre::on()->find($id);
-            $genre->film()->save($new);
+
+            $genre->films()->save($new);
         }
 
         foreach ($data->get('actors') as $id){
             /** @var Actor $actor */
             $actor = Actor::on()->find($id);
-            $actor->film()->save($new);
+            $actor->films()->save($new);
         }
 
         return redirect()->route('films.show', $new);
     }
 
-    public function show(Film $film, Genre $genre = null)
+    public function show(Film $film)
     {
-        var_dump($genre);
         //$this->authorize('view', $film);
-        if ($film->genres()->find($genre))
-        return null;
-            else
+
         return view('films.show', compact('film'));
     }
 
@@ -115,7 +117,8 @@ class FilmController extends Controller
             'filmGenres' => $filmGenres->toArray(),
             'genres' => Genre::all(),
             'filmActors' => $filmActors->toArray(),
-            'actors' => Actor::all()
+            'actors' => Actor::all(),
+            'description' => $film->description
         ]);
     }
 
@@ -123,7 +126,7 @@ class FilmController extends Controller
     public function update(Request $request, Film $film)
     {
   //      $this->authorize('update', $film);
-        //$data = $this->validated($request, $film);
+        $data = $this->validated($request, $film);
 
         $data = $this->formData();
         $data = collect($data);
@@ -138,6 +141,7 @@ class FilmController extends Controller
         foreach ($data->get('genres') as $id){
             /** @var Genre $genre */
             $genre = Genre::on()->find($id);
+
             $genre->films()->save($film);
         }
 
@@ -153,7 +157,7 @@ class FilmController extends Controller
 
     public function destroy(Film $film)
     {
-        $this->authorize('delete', $film);
+        //$this->authorize('delete', $film);
 
         $film->delete();
         return redirect()->route('films.index');
@@ -163,6 +167,7 @@ class FilmController extends Controller
         $rules = [
             'title' => 'required',
             'image' => 'nullable|file',
+            'year' => 'required',
             'genres' => 'nullable|array',
             'actors' => 'nullable|array'
         ];
